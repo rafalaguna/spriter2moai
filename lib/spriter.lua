@@ -27,6 +27,11 @@ local function createAnim ( self, name )
 
 	local layerSize = 8;
 
+--[[
+	if self.curves[name] == nil then
+		return
+	end
+--]]
 	local player = MOAIAnim.new ()
 	player:reserveLinks ( (#self.curves[name] * layerSize) )
 	

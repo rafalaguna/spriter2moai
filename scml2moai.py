@@ -32,30 +32,34 @@ class SaxHandler (xml.sax.handler.ContentHandler):
 	def startElement (self, name, attrs):
 		# Track current tag
 		self.tags.append(name)
-		
+
 		# Parse SCML Information
 		if name == 'folder':
 			self.folder = attrs.getValue('id')
-			
+
 		elif name == 'file':
-			self.files[attrs.getValue('id')] = { 'file': re.sub(r'.*/', '', attrs.getValue('name')), 'width': attrs.getValue('width'), 'height': attrs.getValue('height') }
-			
+			self.files[attrs.getValue('id')] = { 'file': re.sub(r'.*/', '',
+					attrs.getValue('name')), 'width': attrs.getValue('width'),
+					'height': attrs.getValue('height') }
+
 		elif name == 'animation':
 			# Store each animation
 			loop = False if attrs.has_key('looping') and attrs.getValue('looping') == 'false' else True
+
 			self.animation_name = attrs.getValue('name')
-			self.animations[self.animation_name] = { 'loop' : loop , 'length' : attrs.getValue('length') }
-			
+			self.animations[self.animation_name] = { 'loop' : loop,
+					'length' : attrs.getValue('length') }
+
 		elif name == 'object_ref' and self.tags[-3] == "mainline":
 			# Get zindexes from mainline and store by [timesline][key]
 			timeline = attrs.getValue('timeline')
 			keys = self.timelines[timeline] if self.timelines.has_key(timeline) else OrderedDict()
 			keys[attrs.getValue('key')] = { 'zindex': attrs.getValue('z_index') }
 			self.timelines[timeline] = keys
-			
+
 		elif name == "timeline":
 		 	self.timeline = attrs.getValue('id')
-		
+
 		elif name == "key" and self.tags[-2] == "timeline":
 			# Collect useful information from key tag and stash keyframe
 			self.key = attrs.getValue('id')
@@ -80,7 +84,6 @@ class SaxHandler (xml.sax.handler.ContentHandler):
 				keyframe['pivot_x'] = (float(file_details['width']) * float(attrs.getValue('pivot_x'))) if attrs.has_key('pivot_x') else 0
 				keyframe['pivot_y'] = (float(file_details['height']) * float(attrs.getValue('pivot_y'))) if attrs.has_key('pivot_y') else float(file_details['height'])
 				self.timelines[self.timeline][self.key] = keyframe
-
 
 	def endElement (self, name):
 		self.tags.pop()
@@ -107,16 +110,16 @@ def output_lua(anim_data, outpath, scale):
 		# Generate each animation
 		timelines = anim_data[animation]
 		f.write('\t[\'%s\'] = {\n' % animation )
-		
+
 		for ii, timeline in enumerate(timelines.values()):	
 			# Generate Each object layer
 			f.write('\t\t[%d] = {\n' % (ii + 1))
-			
+
 			for iii, keyframe in enumerate(timeline.values()):
 				# Generate each keyframe
 				f.write('\t\t\t[%d] = {\n' % (iii + 1))
 				iv = 0
-				
+
 				for anim_property, value in keyframe.items():
 					# Generate each property
 					iv += 1
@@ -143,22 +146,27 @@ def output_lua(anim_data, outpath, scale):
 def main ():
 	try:
 		# Parser setup for command line options
-		parser = OptionParser(usage = "usage: %prog file.scml [options]", version = "SCML2Moai v0.1")
+		parser = OptionParser(usage = "usage: %prog file.scml [options]",
+				version = "SCML2Moai v0.1")
+
 		parser.add_option("-f", "--file", dest="filename",
-		                  help="specify output FILE (default outputs to same name as scml file)", metavar="FILE")
-		parser.add_option("-4", "--x4",
-		                  action="store_true", dest="x4", default=False,
-		                  help="Dimensions are based on @4x size also output @2x.lua and standard .lua files")
+				help="specify output FILE (default outputs to same name as scml file)",
+				metavar="FILE")
+
+		parser.add_option("-4", "--x4", action="store_true", dest="x4",
+				default=False, help="Dimensions are based on @4x size also output @2x.lua and standard .lua files")
+
 		parser.add_option("-2", "--x2",
-		                  action="store_true", dest="x2", default=False,
-		                  help="Dimensions are based on @2x size also output standard .lua files")				
+				action="store_true", dest="x2", default=False,
+				help="Dimensions are based on @2x size also output standard .lua files")
+
 		(options, args) = parser.parse_args()
 		
 		# Check an input file has been provided
 		if len(args) >= 1:
 			inpath= args[0]
 		else:
-			 parser.error("You must specify an SCML file to convert")
+			parser.error("You must specify an SCML file to convert")
 			
 		# Identify filenames for lua files
 		outpath = ""
@@ -193,7 +201,7 @@ def main ():
 			output_lua(anim_data, outpath, 1)
 		
 	except IOError as e:
-	    print "Error: {0}".format(e.strerror)
+		print "Error: {0}".format(e.strerror)
 
 if __name__ == '__main__':
 	main()
